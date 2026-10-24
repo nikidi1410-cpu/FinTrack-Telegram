@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+.env
+credentials/*
+!credentials/.gitkeep
+logs/
+
+# screenshot pribadi (data transaksi asli)
+WhatsApp Image*

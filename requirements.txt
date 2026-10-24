@@ -1,0 +1,22 @@
+# --- Web framework ---
+fastapi>=0.115
+uvicorn[standard]>=0.32
+
+# --- Konfigurasi & validasi ---
+pydantic>=2.9
+pydantic-settings>=2.6
+
+# --- AI (Gemini) ---
+google-genai>=1.0
+
+# --- Google Sheets ---
+gspread>=6.1
+google-auth>=2.35
+
+# --- HTTP client (Telegram Bot API) ---
+httpx>=0.27
+
+# --- Scheduler & logging ---
+apscheduler>=3.10,<4
+loguru>=0.7
+tzdata>=2024.1             # database zona waktu (Asia/Jakarta) untuk Windows / slim image
