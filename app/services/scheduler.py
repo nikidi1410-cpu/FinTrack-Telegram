@@ -1,5 +1,6 @@
 """Jadwal laporan otomatis: mingguan (Minggu 20:00) & bulanan (tgl 1, 09:00) WIB."""
 
+from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -16,24 +17,26 @@ def _now() -> datetime:
     return datetime.now(ZoneInfo(get_settings().timezone))
 
 
-async def _broadcast(text: str) -> None:
+async def _send_to_each_user(make_report: Callable[[int], Awaitable[str]]) -> None:
+    """Buat laporan dari data masing-masing pengguna; gagal di satu orang tidak menghentikan yang lain."""
     bot = get_telegram()
     for user_id in get_settings().whitelist:  # chat pribadi: chat_id == user_id
         try:
-            await bot.send_message(user_id, text)
+            await bot.send_message(user_id, await make_report(user_id))
         except Exception:
             logger.exception("Gagal kirim laporan ke {}", user_id)
 
 
 async def send_weekly() -> None:
     logger.info("Mengirim laporan mingguan")
-    await _broadcast(await weekly_insight(_now().date()))
+    today = _now().date()
+    await _send_to_each_user(lambda user_id: weekly_insight(user_id, today))
 
 
 async def send_monthly() -> None:
     last_month = _now().date().replace(day=1) - timedelta(days=1)
     logger.info("Mengirim review bulanan {}-{}", last_month.month, last_month.year)
-    await _broadcast(await monthly_insight(last_month.month, last_month.year))
+    await _send_to_each_user(lambda user_id: monthly_insight(user_id, last_month.month, last_month.year))
 
 
 def create_scheduler() -> AsyncIOScheduler:

@@ -29,7 +29,7 @@ class FakeWorksheet:
 @pytest.fixture
 def ws(monkeypatch):
     sheet = FakeWorksheet()
-    monkeypatch.setattr(svc, "_worksheet", lambda title: sheet)
+    monkeypatch.setattr(svc, "_worksheet", lambda title, user_id: sheet)
     return sheet
 
 

@@ -104,8 +104,9 @@ def _now() -> datetime:
     return datetime.now(ZoneInfo(get_settings().timezone))
 
 
-def _worksheet(title: str) -> gspread.Worksheet:
-    return get_spreadsheet().worksheet(title)
+def _worksheet(title: str, user_id: int | str) -> gspread.Worksheet:
+    """Tab di spreadsheet milik pengguna ini."""
+    return get_spreadsheet(get_settings().spreadsheet_id_for(user_id)).worksheet(title)
 
 
 def _norm_time(value: str | None) -> str:
@@ -172,7 +173,7 @@ def append_transactions(transactions: list[Transaction], user_id: int | str) -> 
     """
     settings = get_settings()
     user = str(user_id)
-    ws = _worksheet(settings.sheet_transaksi)
+    ws = _worksheet(settings.sheet_transaksi, user_id)
     existing = _read_rows(ws)
     seen = {
         _dedup_key(r.tanggal, r.waktu, r.nominal, r.tipe)
@@ -213,7 +214,7 @@ def void_last_transaction(user_id: int | str) -> list[TransactionRow]:
 
     Mengembalikan baris yang dibatalkan; list kosong jika tidak ada yang bisa dibatalkan.
     """
-    ws = _worksheet(get_settings().sheet_transaksi)
+    ws = _worksheet(get_settings().sheet_transaksi, user_id)
     mine = [r for r in _read_rows(ws) if r.active and r.pengirim == str(user_id)]
     if not mine:
         return []
@@ -228,10 +229,10 @@ def void_last_transaction(user_id: int | str) -> list[TransactionRow]:
     return targets
 
 
-def list_transactions(start: date, end: date) -> list[TransactionRow]:
+def list_transactions(user_id: int | str, start: date, end: date) -> list[TransactionRow]:
     """Transaksi aktif dengan Tanggal di antara start dan end (inklusif)."""
     rows = []
-    for r in _read_rows(_worksheet(get_settings().sheet_transaksi)):
+    for r in _read_rows(_worksheet(get_settings().sheet_transaksi, user_id)):
         try:
             if r.active and start <= date.fromisoformat(r.tanggal) <= end:
                 rows.append(r)
@@ -240,16 +241,16 @@ def list_transactions(start: date, end: date) -> list[TransactionRow]:
     return rows
 
 
-def _month_rows(month: int, year: int) -> list[TransactionRow]:
+def _month_rows(user_id: int | str, month: int, year: int) -> list[TransactionRow]:
     prefix = f"{year:04d}-{month:02d}"
-    rows = _read_rows(_worksheet(get_settings().sheet_transaksi))
+    rows = _read_rows(_worksheet(get_settings().sheet_transaksi, user_id))
     return [r for r in rows if r.active and r.tanggal.startswith(prefix)]
 
 
-def get_monthly_summary(month: int | None = None, year: int | None = None) -> MonthlySummary:
+def get_monthly_summary(user_id: int | str, month: int | None = None, year: int | None = None) -> MonthlySummary:
     now = _now()
     month, year = month or now.month, year or now.year
-    rows = _month_rows(month, year)
+    rows = _month_rows(user_id, month, year)
 
     per_kategori: dict[str, int] = {}
     for r in rows:
@@ -265,9 +266,9 @@ def get_monthly_summary(month: int | None = None, year: int | None = None) -> Mo
     )
 
 
-def get_budget_status(month: int | None = None, year: int | None = None) -> BudgetStatus:
-    summary = get_monthly_summary(month, year)
-    values = _worksheet(get_settings().sheet_budget).get_values(
+def get_budget_status(user_id: int | str, month: int | None = None, year: int | None = None) -> BudgetStatus:
+    summary = get_monthly_summary(user_id, month, year)
+    values = _worksheet(get_settings().sheet_budget, user_id).get_values(
         value_render_option=ValueRenderOption.unformatted
     )
     budgets = {str(v[0]).strip(): _to_int(v[1]) for v in values[1:] if v and str(v[0]).strip()}

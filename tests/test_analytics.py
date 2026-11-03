@@ -26,11 +26,11 @@ def test_weekly_facts_compares_with_previous_week(monkeypatch):
             row("2026-10-14", 200000), row("2026-10-08", 50000),
             row("2026-10-20", 250000, tipe="Pemasukan", kategori="Pemasukan")]
     monkeypatch.setattr(an.sheets_service, "list_transactions",
-                        lambda start, end: [r for r in rows if start.isoformat() <= r.tanggal <= end.isoformat()])
-    monkeypatch.setattr(an.sheets_service, "get_budget_status", lambda m, y: BudgetStatus(m, y, [
+                        lambda user_id, start, end: [r for r in rows if start.isoformat() <= r.tanggal <= end.isoformat()])
+    monkeypatch.setattr(an.sheets_service, "get_budget_status", lambda user_id, m, y: BudgetStatus(m, y, [
         BudgetItem("Makanan & Minuman", 400_000, 350_000), BudgetItem("Transportasi", 800_000, 50_000)]))
 
-    f = an.weekly_facts(date(2026, 10, 21))
+    f = an.weekly_facts(1, date(2026, 10, 21))
     assert f["periode"] == "2026-10-15 s/d 2026-10-21"
     assert f["total_pengeluaran"] == 150000 and f["total_pengeluaran_minggu_lalu"] == 250000
     assert f["perubahan_persen"] == -40

@@ -97,15 +97,15 @@ async def _reply_for(bot: TelegramClient, message: dict, user_id: int) -> str:
         rows = await asyncio.to_thread(sheets_service.void_last_transaction, user_id)
         return replies.voided(rows)
     if intent == "ringkasan":
-        s = await asyncio.to_thread(sheets_service.get_monthly_summary)
-        b = await asyncio.to_thread(sheets_service.get_budget_status)
+        s = await asyncio.to_thread(sheets_service.get_monthly_summary, user_id)
+        b = await asyncio.to_thread(sheets_service.get_budget_status, user_id)
         today = datetime.now(ZoneInfo(get_settings().timezone)).date()
         return replies.summary(s, b, today)
     if intent == "insight":
         await bot.send_typing(chat_id)
-        return await weekly_insight(datetime.now(ZoneInfo(get_settings().timezone)).date())
+        return await weekly_insight(user_id, datetime.now(ZoneInfo(get_settings().timezone)).date())
     if intent == "budget":
-        b = await asyncio.to_thread(sheets_service.get_budget_status)
+        b = await asyncio.to_thread(sheets_service.get_budget_status, user_id)
         return replies.budget(b, kategori)
 
     await bot.send_typing(chat_id)
