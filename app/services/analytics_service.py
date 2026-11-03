@@ -58,8 +58,8 @@ def _top(rows: list[TransactionRow], n: int = 3) -> list[dict]:
     return [{"tanggal": r.tanggal, "merchant": r.merchant, "kategori": r.kategori, "nominal": r.nominal} for r in top]
 
 
-def _budget_facts(month: int, year: int, today: date | None) -> dict:
-    b = sheets_service.get_budget_status(month, year)
+def _budget_facts(user_id: int, month: int, year: int, today: date | None) -> dict:
+    b = sheets_service.get_budget_status(user_id, month, year)
     days = calendar.monthrange(year, month)[1]
     progres = round(today.day / days * 100) if today else 100
     peringatan = [
@@ -76,14 +76,14 @@ def _budget_facts(month: int, year: int, today: date | None) -> dict:
     }
 
 
-def weekly_facts(today: date) -> dict:
+def weekly_facts(user_id: int, today: date) -> dict:
     """7 hari terakhir (termasuk hari ini) vs 7 hari sebelumnya."""
     start = today - timedelta(days=6)
     prev_start, prev_end = start - timedelta(days=7), start - timedelta(days=1)
-    rows = sheets_service.list_transactions(prev_start, today)
+    rows = sheets_service.list_transactions(user_id, prev_start, today)
     now = [r for r in rows if r.tanggal >= start.isoformat()]
     prev = [r for r in rows if r.tanggal < start.isoformat()]
-    month_rows = sheets_service.list_transactions(today.replace(day=1), today)
+    month_rows = sheets_service.list_transactions(user_id, today.replace(day=1), today)
 
     total_now = sum(r.nominal for r in _pengeluaran(now))
     total_prev = sum(r.nominal for r in _pengeluaran(prev))
@@ -99,17 +99,17 @@ def weekly_facts(today: date) -> dict:
         "per_kategori_minggu_lalu": _per_kategori(prev),
         "transaksi_terbesar": _top(now),
         "kebiasaan_kecil_bulan_ini": small_habits(month_rows),
-        "budget_bulan_ini": _budget_facts(today.month, today.year, today),
+        "budget_bulan_ini": _budget_facts(user_id, today.month, today.year, today),
     }
 
 
-def monthly_facts(month: int, year: int) -> dict:
+def monthly_facts(user_id: int, month: int, year: int) -> dict:
     """Review satu bulan penuh vs bulan sebelumnya."""
     start = date(year, month, 1)
     end = date(year, month, calendar.monthrange(year, month)[1])
     prev_end = start - timedelta(days=1)
     prev_start = prev_end.replace(day=1)
-    rows = sheets_service.list_transactions(prev_start, end)
+    rows = sheets_service.list_transactions(user_id, prev_start, end)
     now = [r for r in rows if r.tanggal >= start.isoformat()]
     prev = [r for r in rows if r.tanggal < start.isoformat()]
 
@@ -129,7 +129,7 @@ def monthly_facts(month: int, year: int) -> dict:
         "per_kategori_bulan_lalu": _per_kategori(prev),
         "transaksi_terbesar": _top(now),
         "kebiasaan_kecil": small_habits(now),
-        "budget": _budget_facts(month, year, None),
+        "budget": _budget_facts(user_id, month, year, None),
     }
 
 
@@ -193,11 +193,11 @@ async def narrate(facts: dict) -> str:
     return _fallback(facts)
 
 
-async def weekly_insight(today: date) -> str:
-    facts = await asyncio.to_thread(weekly_facts, today)
+async def weekly_insight(user_id: int, today: date) -> str:
+    facts = await asyncio.to_thread(weekly_facts, user_id, today)
     return await narrate(facts)
 
 
-async def monthly_insight(month: int, year: int) -> str:
-    facts = await asyncio.to_thread(monthly_facts, month, year)
+async def monthly_insight(user_id: int, month: int, year: int) -> str:
+    facts = await asyncio.to_thread(monthly_facts, user_id, month, year)
     return await narrate(facts)

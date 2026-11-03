@@ -16,8 +16,9 @@ def get_gspread_client() -> gspread.Client:
     return gspread.service_account(filename=path, http_client=BackOffHTTPClient)
 
 
-def get_spreadsheet() -> gspread.Spreadsheet:
-    settings = get_settings()
-    if not settings.google_sheets_spreadsheet_id:
+def get_spreadsheet(spreadsheet_id: str | None = None) -> gspread.Spreadsheet:
+    """Buka spreadsheet berdasarkan ID; tanpa ID -> spreadsheet utama dari .env."""
+    spreadsheet_id = spreadsheet_id or get_settings().google_sheets_spreadsheet_id
+    if not spreadsheet_id:
         raise RuntimeError("GOOGLE_SHEETS_SPREADSHEET_ID belum diisi di .env")
-    return get_gspread_client().open_by_key(settings.google_sheets_spreadsheet_id)
+    return get_gspread_client().open_by_key(spreadsheet_id)

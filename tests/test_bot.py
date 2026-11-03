@@ -93,6 +93,7 @@ def msg(user=USER, **kw) -> dict:
 @pytest.fixture
 def whitelist(monkeypatch):
     monkeypatch.setattr(bot_handler.get_settings(), "telegram_allowed_user_ids", str(USER))
+    monkeypatch.setattr(bot_handler.get_settings(), "user_spreadsheets", "")
 
 
 def test_unknown_user_is_ignored(whitelist):

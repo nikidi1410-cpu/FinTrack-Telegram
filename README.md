@@ -21,6 +21,7 @@ Tes: `pytest -q`
 1. **Gemini** — buat API key di https://aistudio.google.com/apikey → `GEMINI_API_KEY`.
 2. **Google Sheets** — di Google Cloud Console: aktifkan *Google Sheets API* dan *Google Drive API*, buat Service Account, unduh key JSON ke `credentials/service_account.json`. Bagikan spreadsheet ke email service account (akses Editor), lalu isi `GOOGLE_SHEETS_SPREADSHEET_ID`. Buat tab & header otomatis: `python -m scripts.setup_sheets` (aman diulang).
 3. **Telegram bot** — buat bot via @BotFather → `TELEGRAM_BOT_TOKEN`; ID akun Telegram-mu (cek via @userinfobot) → `TELEGRAM_ALLOWED_USER_IDS`.
+4. **Pengguna tambahan (opsional)** — agar orang lain punya data terpisah: buat spreadsheet baru, bagikan ke email service account (Editor), jalankan `python -m scripts.setup_sheets <ID spreadsheet>`, lalu isi `USER_SPREADSHEETS=ID_TELEGRAM:ID_SPREADSHEET` (pisahkan dengan koma). Jangan masukkan ID orang itu ke `TELEGRAM_ALLOWED_USER_IDS`, karena daftar itu memakai spreadsheet utama. Restart bot setelah mengubah `.env`.
 
 ## Autostart di Windows (bot menyala sendiri saat login)
 

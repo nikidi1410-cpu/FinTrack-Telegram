@@ -3,8 +3,13 @@
 Aman dijalankan berulang: tab yang sudah ada tidak dihapus, dan budget yang
 sudah diubah pengguna tidak ditimpa.
 
-Jalankan dari root proyek:  python -m scripts.setup_sheets
+Jalankan dari root proyek:
+  python -m scripts.setup_sheets                     -> spreadsheet utama di .env
+  python -m scripts.setup_sheets <ID atau URL sheet> -> spreadsheet lain, mis. milik pengguna baru
 """
+
+import re
+import sys
 
 import gspread
 
@@ -117,8 +122,14 @@ def setup_summary(ss: gspread.Spreadsheet) -> None:
     ws.format(f"E{first}:E{total}", {"numberFormat": {"type": "PERCENT", "pattern": "0%"}})
 
 
+def parse_spreadsheet_id(value: str) -> str:
+    """Terima ID polos atau URL lengkap Google Sheets."""
+    match = re.search(r"/d/([\w-]+)", value)
+    return match.group(1) if match else value.strip()
+
+
 def main() -> None:
-    ss = get_spreadsheet()
+    ss = get_spreadsheet(parse_spreadsheet_id(sys.argv[1]) if len(sys.argv) > 1 else None)
     setup_transaksi(ss)
     setup_budget(ss)
     setup_summary(ss)
